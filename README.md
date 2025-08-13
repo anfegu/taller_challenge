@@ -63,21 +63,50 @@ This project is pre-configured to connect to a smart contract already deployed o
 
 ---
 
-## For Developers: Local Development & Re-Deploying
+---
 
-If you want to modify the smart contract or deploy your own version, you will need to install [Foundry](https://getfoundry.sh/).
+## For Developers: Local & Testnet Development
 
-### Option A: Running Locally with Anvil
+The application has been designed to be flexible for developers. It supports the public **Sepolia** testnet out-of-the-box, and also any local development network that uses the default chain ID of `31337` (such as Anvil or Hardhat).
 
-1.  **Start a Local Blockchain:** In a terminal, run `anvil`.
-2.  **Deploy the Contract:** In a second terminal, run the deployment script, providing a private key from the Anvil output.
+### Smart Network Handling
+
+- **For Demo Users:** If a user has their MetaMask on any network other than Sepolia, the dApp will display a "Switch to Sepolia" button for convenience.
+- **For Developers:** If you connect with a local network (Chain ID `31337`), the dApp will connect seamlessly without prompting you to switch networks.
+
+### Running with a Local Anvil Network
+
+If you want to modify the smart contract or run a local version, you will need to install [Foundry](https://getfoundry.sh/).
+
+1.  **Start a Local Blockchain:** In a terminal, run `anvil`. This will start a local node at `http://127.0.0.1:8545` with a chain ID of `31337`.
+    ```bash
+    anvil
+    ```
+
+2.  **Deploy the Contract:** In a second terminal, run the deployment script, providing a private key from the Anvil startup output.
     ```bash
     PRIVATE_KEY=<YOUR_ANVIL_PRIVATE_KEY> forge script script/Deploy.s.sol --rpc-url http://127.0.0.1:8545 --broadcast
     ```
-3.  **Update Configuration:** The script will output a new contract address. Copy it and paste it into the `address` field in `contracts/Proposals.json`.
-4.  **Run Frontend & Connect MetaMask:** Follow steps 3 and 4 from the "Live Demo" section, but configure MetaMask for your local Anvil network (RPC URL: `http://127.0.0.1:8545`, Chain ID: `31337`).
 
-### Option B: Deploying Your Own Version to a Testnet
+3.  **Update Contract Address:** The script will output a new contract address. Copy it and paste it into the `address` field in `contracts/Proposals.json`. The frontend reads from this file to know where to send calls.
+
+4.  **Configure MetaMask for Anvil:**
+    - Open MetaMask and go to `Settings` -> `Networks`.
+    - Click `Add a network` -> `Add a network manually`.
+    - Fill in the details:
+        - **Network Name:** Anvil (or any name you like)
+        - **New RPC URL:** `http://127.0.0.1:8545`
+        - **Chain ID:** `31337`
+        - **Currency Symbol:** `ETH`
+    - Save the network.
+
+5.  **Run the Frontend:**
+    ```bash
+    npm run dev
+    ```
+    - Open `http://localhost:3000`. When you connect your wallet, make sure you are on your "Anvil" network in MetaMask. The dApp will connect without any warnings.
+
+### Re-Deploying to a Public Testnet
 
 1.  **Get Prerequisites:** You need a wallet with testnet ETH and a personal RPC URL from a service like [Alchemy](https://www.alchemy.com).
 2.  **Deploy:** Run the deployment script with your testnet RPC URL and private key.

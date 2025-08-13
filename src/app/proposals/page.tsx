@@ -7,75 +7,162 @@ import { useWallet } from '@/app/context/WalletContext';
 interface Proposal {
   title: string;
   description: string;
+  voteCount: number;
 }
 
+// A new component to display wallet and network status with dark theme
+const WalletInfo = () => {
+    const { 
+        address, 
+        connectWallet, 
+        loading, 
+        error, 
+        isSepolia, 
+        networkName, 
+        switchToSepolia 
+    } = useWallet();
+
+    // Main container with dark background
+    const containerClasses = "p-4 bg-gray-900/50 rounded-lg shadow-lg mb-6 border border-gray-700";
+
+    if (loading) {
+        return (
+            <div className={`${containerClasses} text-center`}>
+                <p className="text-gray-300">Initializing wallet connection...</p>
+            </div>
+        );
+    }
+
+    if (!address) {
+        return (
+            <div className="flex flex-col items-center justify-center p-8 bg-gray-900/50 rounded-lg border border-gray-700">
+                <h1 className="text-2xl font-bold mb-4 text-white">Welcome to the Governance dApp</h1>
+                <p className="mb-4 text-gray-400">Please connect your wallet to continue.</p>
+                <button 
+                    onClick={connectWallet}
+                    className="p-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-lg"
+                >
+                    Connect Wallet
+                </button>
+                {error && <p className="text-red-400 mt-4">{error}</p>}
+            </div>
+        );
+    }
+
+    return (
+        <div className={containerClasses}>
+            <div className="flex flex-wrap justify-between items-center">
+                <div className='mb-2 md:mb-0'>
+                    <p className="text-sm text-gray-400">Connected as:</p>
+                    <p className="font-mono text-sm md:text-base break-all text-gray-200">{address}</p>
+                </div>
+                <div className="text-right">
+                    <p className="text-sm text-gray-400">Network:</p>
+                    <p className={`font-bold ${isSepolia ? 'text-green-400' : 'text-yellow-400'}`}>{networkName || 'Unknown'}</p>
+                </div>
+            </div>
+            {error && <p className="text-red-400 mt-2">{error}</p>}
+            {!isSepolia && address && (
+                <div className="mt-4 text-center">
+                    <p className="text-yellow-500 bg-yellow-900/50 p-2 rounded border border-yellow-700">
+                        This dApp is designed for the Sepolia network.
+                    </p>
+                    <button 
+                        onClick={switchToSepolia}
+                        className="mt-2 p-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
+                    >
+                        Switch to Sepolia
+                    </button>
+                </div>
+            )}
+        </div>
+    );
+};
+
+
 export default function Proposals() {
-  const { contract, connectWallet, loading: walletLoading, error: walletError } = useWallet();
+  const { contract, address } = useWallet(); // Get address to know if we should even try to fetch
   const [proposals, setProposals] = useState<Proposal[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [loadingProposals, setLoadingProposals] = useState(false);
+  const [fetchError, setFetchError] = useState('');
 
   useEffect(() => {
     const fetchProposals = async () => {
-      if (!contract) return;
-      setLoading(true);
-      setError('');
+      // Only fetch if we have a contract AND we are connected to a supported network.
+      // The `contract` object will be null if the network is not supported.
+      if (!contract) {
+        setProposals([]); // Clear proposals if contract is not available
+        return;
+      }
+      setLoadingProposals(true);
+      setFetchError('');
       try {
         const fetchedProposals = await contract.getProposals();
         const formattedProposals = fetchedProposals.map((p: any) => ({
           title: p.title,
           description: p.description,
+          voteCount: Number(p.voteCount)
         }));
         setProposals(formattedProposals);
       } catch (err: any) {
         console.error(err);
-        setError(err.message || 'Error fetching proposals');
+        // This error is now less likely, but good to keep for other potential issues.
+        setFetchError('Could not fetch proposals. Please ensure you are on a supported network.');
       } finally {
-        setLoading(false);
+        setLoadingProposals(false);
       }
     };
 
+    // Run fetchProposals only when the contract object is available or changes.
     fetchProposals();
   }, [contract]);
 
-  if (!contract) {
-    return (
-      <div className="flex flex-col items-center justify-center h-screen">
-        <h1 className="text-2xl font-bold mb-4">Governance Proposals</h1>
-        <button 
-            onClick={connectWallet}
-            disabled={walletLoading}
-            className="p-3 bg-blue-500 text-white rounded-lg disabled:bg-gray-400 text-lg"
-        >
-            {walletLoading ? 'Connecting...' : 'Connect Wallet'}
-        </button>
-        {walletError && <p className="text-red-500 mt-4">{walletError}</p>}
-      </div>
-    );
-  }
-
   return (
     <div className="container mx-auto p-4">
-      <div>
-        <div className="flex justify-between items-center mb-4">
-          <h1 className="text-2xl font-bold">Proposals</h1>
-          <Link href="/proposals/create" className="p-2 bg-blue-500 text-white rounded">
-            Create Proposal
-          </Link>
-        </div>
-        {loading && <p>Loading proposals...</p>}
-        {error && <p className="text-red-500">{error}</p>}
-        {!loading && !error && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {proposals.map((proposal, index) => (
-              <div key={index} className="p-4 border rounded-lg shadow-md">
-                <h2 className="text-xl font-bold">{proposal.title}</h2>
-                <p className="mt-2 text-gray-700">{proposal.description}</p>
-              </div>
-            ))}
-          </div>
+        <WalletInfo />
+
+        {/* Only show proposal section if a wallet is connected. 
+            The WalletInfo component will show an error if the network is wrong. */}
+        {address && (
+            <div>
+                <div className="flex justify-between items-center mb-4">
+                    <h1 className="text-2xl font-bold text-white">Proposals</h1>
+                    {/* Only enable create button if the contract is available (i.e., on correct network) */}
+                    <Link 
+                        href="/proposals/create" 
+                        className={`p-2 bg-blue-600 text-white rounded ${!contract ? 'opacity-50 cursor-not-allowed' : 'hover:bg-blue-700'}`}
+                        aria-disabled={!contract}
+                        onClick={(e) => !contract && e.preventDefault()}
+                    >
+                        Create Proposal
+                    </Link>
+                </div>
+
+                {/* Show loading or error states related to fetching proposals */}
+                {loadingProposals && <p className="text-gray-400">Loading proposals...</p>}
+                {fetchError && <p className="text-red-400">{fetchError}</p>}
+
+                {/* Show proposals grid or empty state */}
+                {!loadingProposals && !fetchError && contract && (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {proposals.length > 0 ? (
+                        proposals.map((proposal, index) => (
+                            <div key={index} className="p-4 bg-gray-900/50 border border-gray-700 rounded-lg shadow-lg hover:shadow-blue-900/50 transition-shadow">
+                            <h2 className="text-xl font-bold text-gray-200">{proposal.title}</h2>
+                            <p className="mt-2 text-gray-400">{proposal.description}</p>
+                            <p className="mt-2 font-bold text-gray-200">Votes: {proposal.voteCount}</p>
+                            </div>
+                        ))
+                        ) : (
+                        <div className="col-span-full text-center py-10 bg-gray-900/50 border border-gray-700 rounded-lg">
+                            <h2 className="text-xl text-gray-400">No proposals yet.</h2>
+                            <p className="text-gray-500 mt-2">Why not be the first to create one?</p>
+                        </div>
+                        )}
+                    </div>
+                )}
+            </div>
         )}
-      </div>
     </div>
   );
 }

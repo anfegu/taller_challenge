@@ -1,29 +1,34 @@
 'use client';
 
-import { ethers } from 'ethers';
+import { ethers, Signer, Provider } from 'ethers';
 import contractAbi from '../../../contracts/Proposals.json';
 
-const { abi, address: contractAddress } = contractAbi;
+// Export the ABI and address for flexibility
+export const proposalsContractAbi = contractAbi.abi;
+export const proposalsContractAddress = contractAbi.address;
 
-let contract: ethers.Contract | null = null;
+/**
+ * Returns a contract instance
+ * @param providerOrSigner - The provider or signer to connect the contract to.
+ * @returns A contract instance.
+ */
+export const getProposalsContract = (providerOrSigner: Provider | Signer) => {
+    return new ethers.Contract(proposalsContractAddress, proposalsContractAbi, providerOrSigner);
+};
 
+// The original function can be kept for reference or legacy use if needed, 
+// but the new approach is to use getProposalsContract with a provider/signer from the context.
 async function initializeContract() {
-    if (contract) return contract;
-
-    let provider: ethers.BrowserProvider | ethers.JsonRpcProvider;
-    let signer: ethers.Signer | undefined;
-
     if (typeof window !== 'undefined' && typeof window.ethereum !== 'undefined') {
-        provider = new ethers.BrowserProvider(window.ethereum);
-        await provider.send("eth_requestAccounts", []); // Request account access
-        signer = await provider.getSigner();
-        contract = new ethers.Contract(contractAddress, abi, signer);
+        const provider = new ethers.BrowserProvider(window.ethereum);
+        await provider.send("eth_requestAccounts", []); // This is the line that always prompts the user
+        const signer = await provider.getSigner();
+        return new ethers.Contract(proposalsContractAddress, proposalsContractAbi, signer);
     } else {
         console.log('MetaMask not detected. Using local read-only provider.');
-        provider = new ethers.JsonRpcProvider("http://127.0.0.1:8545");
-        contract = new ethers.Contract(contractAddress, abi, provider);
+        const provider = new ethers.JsonRpcProvider("http://127.0.0.1:8545");
+        return new ethers.Contract(proposalsContractAddress, proposalsContractAbi, provider);
     }
-    return contract;
 }
 
 export { initializeContract };

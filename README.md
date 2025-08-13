@@ -20,7 +20,8 @@ This is a simple decentralized application (dApp) that allows users to submit an
 
 The UI is designed to be clean and intuitive. When no proposals have been created, the application displays a clear message to the user.
 
-![The user interface when no proposals have been submitted yet.](PATH_TO_YOUR_IMAGE.png)
+![The user interface when no proposals have been submitted yet.](<img width="2582" height="714" alt="image" src="https://github.com/user-attachments/assets/2db01e4d-f7b0-401d-8e9f-419f3921568e" />
+)
 
 ---
 

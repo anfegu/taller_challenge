@@ -10,7 +10,6 @@ interface Proposal {
   voteCount: number;
 }
 
-// A new component to display wallet and network status with dark theme
 const WalletInfo = () => {
     const { 
         address, 
@@ -19,7 +18,8 @@ const WalletInfo = () => {
         error, 
         isSepolia, 
         networkName, 
-        switchToSepolia 
+        switchToSepolia,
+        contract 
     } = useWallet();
 
     // Main container with dark background
@@ -49,6 +49,10 @@ const WalletInfo = () => {
         );
     }
 
+    // The button should only show if the contract is NOT loaded (meaning an error state)
+    // and the user is not already on Sepolia.
+    const shouldShowSwitchButton = !contract && !isSepolia;
+
     return (
         <div className={containerClasses}>
             <div className="flex flex-wrap justify-between items-center">
@@ -58,14 +62,14 @@ const WalletInfo = () => {
                 </div>
                 <div className="text-right">
                     <p className="text-sm text-gray-400">Network:</p>
-                    <p className={`font-bold ${isSepolia ? 'text-green-400' : 'text-yellow-400'}`}>{networkName || 'Unknown'}</p>
+                    <p className={`font-bold ${contract ? 'text-green-400' : 'text-yellow-400'}`}>{networkName || 'Unknown'}</p>
                 </div>
             </div>
             {error && <p className="text-red-400 mt-2">{error}</p>}
-            {!isSepolia && address && (
+            {shouldShowSwitchButton && (
                 <div className="mt-4 text-center">
                     <p className="text-yellow-500 bg-yellow-900/50 p-2 rounded border border-yellow-700">
-                        This dApp is designed for the Sepolia network.
+                        This dApp is primarily tested on Sepolia.
                     </p>
                     <button 
                         onClick={switchToSepolia}
@@ -81,17 +85,15 @@ const WalletInfo = () => {
 
 
 export default function Proposals() {
-  const { contract, address } = useWallet(); // Get address to know if we should even try to fetch
+  const { contract, address } = useWallet();
   const [proposals, setProposals] = useState<Proposal[]>([]);
   const [loadingProposals, setLoadingProposals] = useState(false);
   const [fetchError, setFetchError] = useState('');
 
   useEffect(() => {
     const fetchProposals = async () => {
-      // Only fetch if we have a contract AND we are connected to a supported network.
-      // The `contract` object will be null if the network is not supported.
       if (!contract) {
-        setProposals([]); // Clear proposals if contract is not available
+        setProposals([]);
         return;
       }
       setLoadingProposals(true);
@@ -106,14 +108,12 @@ export default function Proposals() {
         setProposals(formattedProposals);
       } catch (err: any) {
         console.error(err);
-        // This error is now less likely, but good to keep for other potential issues.
         setFetchError('Could not fetch proposals. Please ensure you are on a supported network.');
       } finally {
         setLoadingProposals(false);
       }
     };
 
-    // Run fetchProposals only when the contract object is available or changes.
     fetchProposals();
   }, [contract]);
 
@@ -121,13 +121,10 @@ export default function Proposals() {
     <div className="container mx-auto p-4">
         <WalletInfo />
 
-        {/* Only show proposal section if a wallet is connected. 
-            The WalletInfo component will show an error if the network is wrong. */}
         {address && (
             <div>
                 <div className="flex justify-between items-center mb-4">
                     <h1 className="text-2xl font-bold text-white">Proposals</h1>
-                    {/* Only enable create button if the contract is available (i.e., on correct network) */}
                     <Link 
                         href="/proposals/create" 
                         className={`p-2 bg-blue-600 text-white rounded ${!contract ? 'opacity-50 cursor-not-allowed' : 'hover:bg-blue-700'}`}
@@ -138,12 +135,10 @@ export default function Proposals() {
                     </Link>
                 </div>
 
-                {/* Show loading or error states related to fetching proposals */}
                 {loadingProposals && <p className="text-gray-400">Loading proposals...</p>}
                 {fetchError && <p className="text-red-400">{fetchError}</p>}
 
-                {/* Show proposals grid or empty state */}
-                {!loadingProposals && !fetchError && contract && (
+                {contract && !loadingProposals && !fetchError && (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                         {proposals.length > 0 ? (
                         proposals.map((proposal, index) => (

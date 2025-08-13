@@ -1,6 +1,6 @@
 # Governance Proposal dApp
 
-This is a simple decentralized application (dApp) that allows users to submit and view governance proposals. It features a Next.js frontend that interacts with a Solidity smart contract that is **live and deployed on the Sepolia testnet**.
+This is a simple decentralized application (dApp) that allows users to submit and view governance proposals. It features a Next.js frontend that interacts with a Solidity smart contract that is **live and deployed on the Sepolia testnet**. You can view the live contract on [Etherscan](https://sepolia.etherscan.io/address/0xE299dB76392F568EE10291D132d53aC1374d1935).
 
 ## Features
 
@@ -15,6 +15,12 @@ This is a simple decentralized application (dApp) that allows users to submit an
 - **Frontend:** Next.js, React, TypeScript, Ethers.js, Tailwind CSS
 - **Smart Contract:** Solidity
 - **Development Environment:** Foundry, Anvil
+
+## User Interface
+
+The UI is designed to be clean and intuitive. When no proposals have been created, the application displays a clear message to the user.
+
+![The user interface when no proposals have been submitted yet.](PATH_TO_YOUR_IMAGE.png)
 
 ---
 

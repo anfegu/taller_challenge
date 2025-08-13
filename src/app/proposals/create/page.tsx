@@ -14,7 +14,6 @@ export default function CreateProposal() {
   const [message, setMessage] = useState('');
 
   useEffect(() => {
-    // If the user navigates here directly without being connected, redirect them.
     if (!contract) {
       router.replace('/proposals');
     }

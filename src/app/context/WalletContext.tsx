@@ -2,10 +2,9 @@
 
 import { createContext, useContext, useState, ReactNode, useEffect, useCallback } from 'react';
 import { ethers } from 'ethers';
-import { getProposalsContract } from '../proposals/contract';
+import { getProposalsContract, proposalsContractAddress } from '../proposals/contract';
 
 const SEPOLIA_CHAIN_ID = '11155111';
-const LOCAL_CHAIN_ID = '31337'; // Default for Anvil/Hardhat
 const SEPOLIA_HEX_CHAIN_ID = '0xaa36a7';
 
 interface WalletContextType {
@@ -61,17 +60,23 @@ export function WalletProvider({ children }: { children: ReactNode }) {
         setAddress(userAddress);
         setNetworkName(network.name);
         
-        const chainId = network.chainId.toString();
-        setIsSepolia(chainId === SEPOLIA_CHAIN_ID);
+        // This check is for the UI only, to decide whether to show the "Switch" button
+        setIsSepolia(network.chainId.toString() === SEPOLIA_CHAIN_ID);
 
-        if (chainId === SEPOLIA_CHAIN_ID || chainId === LOCAL_CHAIN_ID) {
+        // This is the core logic: check if the contract exists on the current network
+        const contractCode = await provider.getCode(proposalsContractAddress);
+
+        if (contractCode !== '0x') {
+            // Contract is deployed here. Set it up.
             const contractInstance = getProposalsContract(signer);
             setContract(contractInstance);
             setError('');
         } else {
+            // Contract is not on this network.
             setContract(null);
-            setError(`Unsupported network. Please switch to Sepolia.`);
+            setError(`The proposals contract is not deployed on the ${network.name} network. Please switch to a supported network.`);
         }
+
     } catch (err) {
         setError("An error occurred while setting up the wallet state.");
         console.error(err);
@@ -119,7 +124,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
 
     if (window.ethereum) {
       window.ethereum.on('chainChanged', handleChainChanged);
-      window.ethereum.on('accountsChanged', handleChainChanged); // Reload on account change is simple and effective
+      window.ethereum.on('accountsChanged', handleChainChanged);
     }
 
     return () => {

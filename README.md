@@ -18,9 +18,13 @@ This is a simple decentralized application (dApp) that allows users to submit an
 
 ## User Interface
 
-The UI is designed to be clean and intuitive. When no proposals have been created, the application displays a clear message to the user.
+The UI is designed to be clean and intuitive. When no proposals have been created, the application displays a clear message to the user. After proposals are added, they are displayed in a clean, grid-based layout.
 
-![The user interface when no proposals have been submitted yet.](PATH_TO_YOUR_IMAGE.png)
+**Empty State:**
+![The user interface when no proposals have been submitted yet.](./public/Screenshot%202025-08-13%20at%2012.21.44%E2%80%AFAM.png)
+
+**Proposals View:**
+![The user interface showing a list of proposals.](./public/Screenshot%202025-08-13%20at%2012.35.12%E2%80%AFAM.png)
 
 ---
 
